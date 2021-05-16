@@ -3,6 +3,7 @@ import json
 import requests
 import time
 from datetime import datetime,timedelta
+from zoneinfo import ZoneInfo
 
 # from colorama import init
 # from colorama import Fore, Style
@@ -13,8 +14,7 @@ from datetime import datetime,timedelta
 HOLO_POI_URL = "https://holo.poi.cat/api/v4/channels_report?ids={holo}&metrics=youtube_channel_subscriber,youtube_channel_view&startAt={startDate}&endAt={endDate}"
 NASFAQ_URL = "https://nasfaq.biz/api/getStats"
 
-LOCAL_RESET_HOUR = 15
-LOCAL_RESET_MINUTE = 0
+
 
 # subs are possibly worth about 10k view for 1k subs
 # this doesn't apply anymore but I'm too lazy to scrub it out
@@ -23,6 +23,12 @@ SUB_TO_VIEW_VALUE = 10000
 # list the holos by their generation according to nasfaq since
 # the lists returned by neither server does so
 HOLOS = ["hololive", "sora", "roboco", "miko", "suisei", "azki", "mel", "fubuki", "matsuri", "aki", "haato", "aqua", "shion", "ayame", "choco", "choco_alt", "subaru", "mio", "okayu", "korone", "pekora", "rushia", "flare", "noel", "marine", "kanata", "coco", "watame", "towa", "himemoriluna", "lamy", "nene", "botan", "polka", "risu", "moona", "iofi", "calliope", "kiara", "inanis", "gura", "amelia", "ollie", "melfissa", "reine", "ui", "nana", "pochimaru", "ayamy", "civia"]
+
+# need to ensure we dont get fucked by dumb time fuckery which includes dst
+TIMEZONE = ZoneInfo("Australia/Brisbane")
+LOCAL_RESET_HOUR = 15
+LOCAL_RESET_MINUTE = 0
+LOCAL_ADJUSTMENT_MINUTE = 5
 
 
 # testHolo = "kanata"
@@ -39,6 +45,7 @@ threeDaysAgoTime = int((currentTime - threeDaysMilliSeconds))
 # response = requests.get(testHoloURL)
 
 statResponse = requests.get(NASFAQ_URL)
+coinHistory = json.loads(statResponse.json()['coinHistory'])
 
 currentDate = datetime.now()
 dateFormat = "{month}/{day}/{year}"
@@ -48,15 +55,37 @@ currentDateStamp = dateFormat.format(month = currentDate.strftime("%m"), day = c
 holoList = statResponse.json()['stats']
 poiStatCount ={}
 
-yesterdayAdjustmentTime = statResponse.json()['todayPrices'][0]['coinInfo']['timestamp']
+yesterdayAdjustmentTime = coinHistory[-1]['timestamp']
+# for tick in reversed(range(len(statResponse.json()['coinInfo']['data']['aki']['history']))):
+#     pass
+#     curTimestamp = statResponse.json()['coinInfo']['data']['aki']['history'][tick]['timestamp']
+#     curDate = datetime.fromtimestamp(curTimestamp / 1e3).replace(tzinfo=TIMEZONE)
+#     curHour = curDate.hour
+#     curMinute = curDate.minute
+#     if (curHour == LOCAL_RESET_HOUR and LOCAL_ADJUSTMENT_MINUTE == curDate.minute and LOCAL_ADJUSTMENT_MINUTE == (curDate.minute - 1) and LOCAL_ADJUSTMENT_MINUTE == (curDate.minute + 1) ):
+#         yesterdayAdjustmentTime = curTimestamp
+
 yesterdayAdjustmentHistory = {}
-for tick in reversed(range(len(statResponse.json()['coinHistory']))):
+
+# for holo in statResponse.json()['coinInfo']['data']:
+#     pass
+#     history = statResponse.json()['coinInfo']['data'][holo]['history']
+#     for tick in reversed(range(len(history))):
+#         if(history[tick]['timestamp'] == yesterdayAdjustmentTime):
+#             pass
+#             yesterdayAdjustmentHistory[holo] = history[tick]
+for tick in reversed(range(len(coinHistory))):
     pass
-    history = statResponse.json()['coinHistory']
+    history = coinHistory
     if(history[tick]['timestamp'] == yesterdayAdjustmentTime):
         pass
         yesterdayAdjustmentHistory = history[tick]['data']
-todayCoinHistory = statResponse.json()['todayPrices'][-1]["coinInfo"]['data']
+todayCoinHistory = {}
+for holo in statResponse.json()['coinInfo']['data']:
+    pass
+    todayCoinHistory[holo] = statResponse.json()['coinInfo']['data'][holo]
+
+# todayCoinHistory = statResponse.json()['todayPrices'][-1]["coinInfo"]['data']
 
 
 
@@ -93,7 +122,7 @@ for holo in HOLOS:
             time = rows[row][0]
             unixTime = time/1e3
             # print(unixTime)
-            date = datetime.fromtimestamp(unixTime)
+            date = datetime.fromtimestamp(unixTime).replace(tzinfo=TIMEZONE)
             day = date.day
             hour = date.hour
             minutes = date.minute

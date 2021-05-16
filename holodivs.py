@@ -62,7 +62,12 @@ lastWeekDivs = divs[lastWeekDivTime]
 
 
 # current prices
-todayPrices = statResponse.json()['todayPrices'][-1]['coinInfo']['data']
+# todayPrices = statResponse.json()['todayPrices'][-1]['coinInfo']['data']
+todayPrices = {}
+for holo in statResponse.json()['coinInfo']['data']:
+    pass
+    todayPrices[holo] = statResponse.json()['coinInfo']['data'][holo]
+
 
 goodHolos = {}
 acceptableHolos= {}
@@ -101,6 +106,7 @@ with open("holodivs.txt", "w") as holoDivFile:
 
             prevFridayWeeklySubs += int(chocoAlt['weeklySubscriberCount']['data'][prevFridayIndex])
             curWeeklySubs += int(chocoAlt['weeklySubscriberCount']['data'][curDateIndex])
+
 
         if (lastWeekDivs[holo] / todayPrices[holo]['price'] >= 0.30):
             pass
