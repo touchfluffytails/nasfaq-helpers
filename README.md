@@ -2,7 +2,7 @@
 
 Must be Python 3.9.*
 
-Uses requests and tzdata so run this in cmd
+Uses requests and tzdata so run these in cmd
 
 pip install requests
 
