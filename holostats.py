@@ -5,6 +5,9 @@ import time
 from datetime import datetime,timedelta
 from zoneinfo import ZoneInfo
 
+# for enabling and disabling the subs to view shit which is outed and not valid anymore
+THEORETICAL_VIEWS = False
+
 # from colorama import init
 # from colorama import Fore, Style
 # init()
@@ -26,9 +29,12 @@ HOLOS = ["hololive", "sora", "roboco", "miko", "suisei", "azki", "mel", "fubuki"
 
 # need to ensure we dont get fucked by dumb time fuckery which includes dst
 TIMEZONE = ZoneInfo("Australia/Brisbane")
+#values for when adjustments occurs
 LOCAL_RESET_HOUR = 15
-LOCAL_RESET_MINUTE = 0
+#nasfaq
 LOCAL_ADJUSTMENT_MINUTE = 5
+#this is for holopoi
+LOCAL_RESET_MINUTE = 0
 
 
 # testHolo = "kanata"
@@ -165,8 +171,12 @@ with open('holostats.txt', 'w') as statFile:
         dailySubDifference = todaySubs - yesterdaySubs
         yesterdaySubDifference = yesterdaySubs - twoDaysSubs
 
-        theoreticalSubViews = (dailySubDifference / 1000) * SUB_TO_VIEW_VALUE
-        theoreticalYesterdaySubViews = (yesterdaySubDifference / 1000) * SUB_TO_VIEW_VALUE
+        theoreticalSubViews = 0
+        theoreticalYesterdaySubViews = 0
+        if(dailySubDifference / 1000 != 0):
+            theoreticalSubViews = (dailySubDifference / 1000) * SUB_TO_VIEW_VALUE
+        if(yesterdaySubDifference / 1000 != 0):
+            theoreticalYesterdaySubViews = (yesterdaySubDifference / 1000) * SUB_TO_VIEW_VALUE
 
 
         # print(todayViews)
@@ -192,11 +202,16 @@ with open('holostats.txt', 'w') as statFile:
         print("Daily difference - {difference}".format(difference=(dailyViewDifference)))
         print("Yesterday daily difference - {difference}".format(difference=(yesterdayViewDifference)))
         print("Day difference - {difference}".format(difference=(dailyViewDifference - yesterdayViewDifference)))
-        print("Daily % difference - {difference}%".format(difference=((float(dailyViewDifference / yesterdayViewDifference) -1) * 100)))
-        print("Theoretical daily views with sub views - {views}".format(views=((dailyViewDifference) + theoreticalSubViews)))
-        print("Theoretical yesterday daily views with sub views - {views}".format(views=((yesterdayViewDifference) + theoreticalYesterdaySubViews)))
-        print("Daily difference with theoretical views - {difference}".format(difference=((dailyViewDifference + theoreticalSubViews) - (yesterdayViewDifference + theoreticalYesterdaySubViews))))
-        print("Daily % difference with theoretical views - {difference}".format(difference=(((float(dailyViewDifference + theoreticalSubViews) / (yesterdayViewDifference + theoreticalYesterdaySubViews)) -1) * 100)))
+        if(dailyViewDifference != 0):
+            if(yesterdayViewDifference != 0):
+                print("Daily % difference - {difference}%".format(difference=((float(dailyViewDifference / yesterdayViewDifference) -1) * 100)))
+
+        if(THEORETICAL_VIEWS):
+            print("Theoretical daily views with sub views - {views}".format(views=((dailyViewDifference) + theoreticalSubViews)))
+            print("Theoretical yesterday daily views with sub views - {views}".format(views=((yesterdayViewDifference) + theoreticalYesterdaySubViews)))
+            print("Daily difference with theoretical views - {difference}".format(difference=((dailyViewDifference + theoreticalSubViews) - (yesterdayViewDifference + theoreticalYesterdaySubViews))))
+            if(yesterdayViewDifference != 0 and theoreticalYesterdaySubViews != 0):
+                print("Daily % difference with theoretical views - {difference}".format(difference=(((float(dailyViewDifference + theoreticalSubViews) / (yesterdayViewDifference + theoreticalYesterdaySubViews)) -1) * 100)))
 
         print("\nToday coin circulation - {circulated}".format(circulated=todayCoinHistory[holo]['inCirculation']))
         print("Yesterday coin circulation - {circulated}".format(circulated=yesterdayAdjustmentHistory[holo]['inCirculation']))
@@ -213,8 +228,9 @@ with open('holostats.txt', 'w') as statFile:
         print("Yesterday subs - {views}".format(views=yesterdaySubs))
         print("Daily difference - {difference}".format(difference=(dailySubDifference)))
         print("Yesterday daily difference - {difference}".format(difference=(yesterdaySubDifference)))
-        if(yesterdaySubDifference != 0):
-            print("Daily % difference - {difference}%".format(difference=((float(dailySubDifference / yesterdaySubDifference) - 1) * 100)))
+        if(dailySubDifference != 0):
+            if(yesterdaySubDifference != 0):
+                print("Daily % difference - {difference}%".format(difference=((float(dailySubDifference / yesterdaySubDifference) - 1) * 100)))
 
         print ("\n---------------------------------")
 

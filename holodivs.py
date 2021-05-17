@@ -129,13 +129,15 @@ with open("holodivs.txt", "w") as holoDivFile:
             print ( "\nPF views - " + str(prevFridayWeeklyViews))
             print ( "CW views - " + str(curWeeklyViews))
             print ("View count difference - " + str(curWeeklyViews - prevFridayWeeklyViews))
-            print ("Views % difference - " + str(((curWeeklyViews / prevFridayWeeklyViews) - 1) * 100) + "%\n")
+            if (prevFridayWeeklyViews != 0):
+                print ("Views % difference - " + str(((curWeeklyViews / prevFridayWeeklyViews) - 1) * 100) + "%\n")
 
             print ( "PF subs - " + str(prevFridayWeeklySubs))
             print ( "CW subs - " + str(curWeeklySubs))
             print ("Subs count difference - " + str(curWeeklyViews - prevFridayWeeklySubs))
             if (curWeeklySubs != 0):
-                print ("Subs % difference - " + str(((curWeeklySubs / prevFridayWeeklySubs) - 1) * 100)+ "%\n")
+                if(prevFridayWeeklySubs != 0):
+                    print ("Subs % difference - " + str(((curWeeklySubs / prevFridayWeeklySubs) - 1) * 100)+ "%\n")
 
             print ("Last week divs - " + str(lastWeekDivs[holo]))
             # print(Fore.GREEN)
