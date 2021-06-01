@@ -5,15 +5,13 @@ import time
 from datetime import datetime,timedelta
 from zoneinfo import ZoneInfo
 
-# for enabling and disabling the subs to view shit which is outed and not valid anymore
+# for enabling and disabling the subs to view shit which is outdated and not valid anymore
 THEORETICAL_VIEWS = False
 
 # from colorama import init
 # from colorama import Fore, Style
 # init()
 
-## TODO Add in share differences
-## TODO Modify % to * 100
 HOLO_POI_URL = "https://holo.poi.cat/api/v4/channels_report?ids={holo}&metrics=youtube_channel_subscriber,youtube_channel_view&startAt={startDate}&endAt={endDate}"
 NASFAQ_URL = "https://nasfaq.biz/api/getStats"
 
@@ -25,6 +23,7 @@ SUB_TO_VIEW_VALUE = 10000
 
 # list the holos by their generation according to nasfaq since
 # the lists returned by neither server does so
+# girls you dont want can just be removed from the list
 HOLOS = ["hololive", "sora", "roboco", "miko", "suisei", "azki", "mel", "fubuki", "matsuri", "aki", "haato", "aqua", "shion", "ayame", "choco", "choco_alt", "subaru", "mio", "okayu", "korone", "pekora", "rushia", "flare", "noel", "marine", "kanata", "coco", "watame", "towa", "himemoriluna", "lamy", "nene", "botan", "polka", "risu", "moona", "iofi", "calliope", "kiara", "inanis", "gura", "amelia", "ollie", "melfissa", "reine", "ui", "nana", "pochimaru", "ayamy", "civia"]
 
 # need to ensure we dont get fucked by dumb time fuckery which includes dst
@@ -128,7 +127,7 @@ for holo in HOLOS:
             time = rows[row][0]
             unixTime = time/1e3
             # print(unixTime)
-            date = datetime.fromtimestamp(unixTime).replace(tzinfo=TIMEZONE)
+            date = datetime.fromtimestamp(unixTime).astimezone(TIMEZONE)
             day = date.day
             hour = date.hour
             minutes = date.minute
