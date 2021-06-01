@@ -170,6 +170,10 @@ with open('holostats.txt', 'w') as statFile:
         dailySubDifference = todaySubs - yesterdaySubs
         yesterdaySubDifference = yesterdaySubs - twoDaysSubs
 
+        nasWeeklyViewCount = holoList[holo]["weeklyViewCount"]["data"][-1]
+        averageViews = int(nasWeeklyViewCount) / 7
+
+
         theoreticalSubViews = 0
         theoreticalYesterdaySubViews = 0
         if(dailySubDifference / 1000 != 0):
@@ -204,6 +208,7 @@ with open('holostats.txt', 'w') as statFile:
         if(dailyViewDifference != 0):
             if(yesterdayViewDifference != 0):
                 print("Daily % difference - {difference}%".format(difference=((float(dailyViewDifference / yesterdayViewDifference) -1) * 100)))
+        print("Average weekly views: {average}".format(average=averageViews))
 
         if(THEORETICAL_VIEWS):
             print("Theoretical daily views with sub views - {views}".format(views=((dailyViewDifference) + theoreticalSubViews)))
