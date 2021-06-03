@@ -39,7 +39,7 @@ if( not os.path.isfile(JSON_FILENAME)):
     res = requests.get(NASFAQ_URL)
     res = res.json()
     statResponseJson = res
-    curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+    curTime = mktime(datetime.datetime.now().astimezone(TIMEZONE).timetuple())
     jsonData = {}
     jsonData["lastGrab"] = curTime
     jsonData["stats"] = res
@@ -48,7 +48,7 @@ if( not os.path.isfile(JSON_FILENAME)):
 else:
     with open(JSON_FILENAME, "r+", encoding="utf-8") as statJSON:
         res = json.load(statJSON)
-        curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+        curTime = mktime(datetime.datetime.now().astimezone(TIMEZONE).timetuple())
         if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
             print("Updating getStat")
             res = requests.get(NASFAQ_URL)
