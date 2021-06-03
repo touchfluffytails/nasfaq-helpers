@@ -1,19 +1,28 @@
 import sys
+import os.path
 import json
 import requests
 import time
 import datetime
+from time import mktime
 import csv
+from zoneinfo import ZoneInfo
 
+# our printing limits for the end of file
+GOOD_HOLO = 0.30
+ACCEPTABLE_HOLO = 0.25
 
 # from colorama import init
 # from colorama import Fore, Style
 # init()
+JSON_FILENAME = "holostats.json"
 
+# need to ensure we dont get fucked by dumb time fuckery which includes dst
+TIMEZONE = ZoneInfo("Australia/Brisbane")
 
 HOLO_DIVS_URL = "https://nasfaq.biz/api/getDividends"
 HOLO_STATS_URL = "https://nasfaq.biz/api/getStats"
-
+#this is needed but I don't remember why i needed 17 hours anymore. Fuck
 SEVENTEEN_HOURS = 61200
 
 HOLOS = ["hololive", "sora", "roboco", "miko", "suisei", "azki", "mel", "fubuki", "matsuri", "aki", "haato", "aqua", "shion", "ayame", "choco", "choco_alt", "subaru", "mio", "okayu", "korone", "pekora", "rushia", "flare", "noel", "marine", "kanata", "coco", "watame", "towa", "himemoriluna", "lamy", "nene", "botan", "polka", "risu", "moona", "iofi", "calliope", "kiara", "inanis", "gura", "amelia", "ollie", "melfissa", "reine", "ui", "nana", "pochimaru", "ayamy", "civia"]
@@ -21,9 +30,41 @@ HOLOS = ["hololive", "sora", "roboco", "miko", "suisei", "azki", "mel", "fubuki"
 
 
 
+# 12 hours
+REDOWNLOAD_STAT_TIME = 43200
+
+statResponseJson = None
+if( not os.path.isfile(JSON_FILENAME)):
+    print("Creating {filename} and getting getStat".format(filename=JSON_FILENAME))
+    res = requests.get(NASFAQ_URL)
+    res = res.json()
+    statResponseJson = res
+    curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+    jsonData = {}
+    jsonData["lastGrab"] = curTime
+    jsonData["stats"] = res
+    with open(JSON_FILENAME, "w", encoding="utf-8") as statJSON:
+        json.dump(jsonData, statJSON)
+else:
+    with open(JSON_FILENAME, "r+", encoding="utf-8") as statJSON:
+        res = json.load(statJSON)
+        curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+        if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
+            print("Updating getStat")
+            res = requests.get(NASFAQ_URL)
+            res = res.json()
+            statResponseJson = res
+            jsonData = {}
+            jsonData["lastGrab"] = curTime
+            jsonData["stats"] = res
+            json.dump(jsonData, statJSON)
+        else:
+            print("Using saved stats")
+            statResponseJson = res["stats"]
+
 
 divResponse = requests.get(HOLO_DIVS_URL)
-statResponse =requests.get(HOLO_STATS_URL)
+# statResponse =requests.get(HOLO_STATS_URL)
 
 # with open("data_file.json", "w") as write_file:
 #     json.dump(data, write_file)
@@ -36,7 +77,7 @@ lastFriday = (currentDate.date() - datetime.timedelta(days=currentDate.weekday()
 
 
 divsList = divResponse.json()['dividends']['payouts']
-holoStats = statResponse.json()['stats']
+holoStats = statResponseJson['stats']
 
 dateFormat = "{month}/{day}/{year}"
 lastFridayDateStamp = dateFormat.format(month = lastFriday.strftime("%m"), day = lastFriday.strftime("%d"), year = lastFriday.strftime("%Y"))
@@ -62,11 +103,11 @@ lastWeekDivs = divs[lastWeekDivTime]
 
 
 # current prices
-# todayPrices = statResponse.json()['todayPrices'][-1]['coinInfo']['data']
+# todayPrices = statResponseJson['todayPrices'][-1]['coinInfo']['data']
 todayPrices = {}
-for holo in statResponse.json()['coinInfo']['data']:
+for holo in statResponseJson['coinInfo']['data']:
     pass
-    todayPrices[holo] = statResponse.json()['coinInfo']['data'][holo]
+    todayPrices[holo] = statResponseJson['coinInfo']['data'][holo]
 
 
 goodHolos = {}
@@ -108,12 +149,12 @@ with open("holodivs.txt", "w") as holoDivFile:
             curWeeklySubs += int(chocoAlt['weeklySubscriberCount']['data'][curDateIndex])
 
 
-        if (lastWeekDivs[holo] / todayPrices[holo]['price'] >= 0.30):
+        if (lastWeekDivs[holo] / todayPrices[holo]['price'] >= GOOD_HOLO):
             pass
             normDiv = (lastWeekDivs[holo] / todayPrices[holo]['price'])
             div10 = (lastWeekDivs[holo] * 1.1) / todayPrices[holo]['price']
             goodHolos[holo] = {"div": normDiv, "div10": div10,"price":lastWeekDivs[holo]}
-        elif ((lastWeekDivs[holo] * 1.1) / todayPrices[holo]['price'] >= 0.30):
+        elif ((lastWeekDivs[holo] * 1.1) / todayPrices[holo]['price'] >= ACCEPTABLE_HOLO):
             pass
             normDiv = (lastWeekDivs[holo] / todayPrices[holo]['price'])
             div10 = (lastWeekDivs[holo] * 1.1) / todayPrices[holo]['price']

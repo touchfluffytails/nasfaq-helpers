@@ -1,8 +1,10 @@
 import sys
 import json
+import os.path
 import requests
 import time
 from datetime import datetime,timedelta
+from time import mktime
 from zoneinfo import ZoneInfo
 
 # for enabling and disabling the subs to view shit which is outdated and not valid anymore
@@ -15,6 +17,7 @@ THEORETICAL_VIEWS = False
 HOLO_POI_URL = "https://holo.poi.cat/api/v4/channels_report?ids={holo}&metrics=youtube_channel_subscriber,youtube_channel_view&startAt={startDate}&endAt={endDate}"
 NASFAQ_URL = "https://nasfaq.biz/api/getStats"
 
+JSON_FILENAME = "holostats.json"
 
 
 # subs are possibly worth about 10k view for 1k subs
@@ -34,8 +37,8 @@ LOCAL_RESET_HOUR = 15
 LOCAL_ADJUSTMENT_MINUTE = 5
 #this is for holopoi
 LOCAL_RESET_MINUTE = 0
-
-
+# 12 hours
+REDOWNLOAD_STAT_TIME = 43200
 # testHolo = "kanata"
 
 # with open("data_file.json", "w") as write_file:
@@ -48,22 +51,53 @@ threeDaysAgoTime = int((currentTime - threeDaysMilliSeconds))
 # testHoloURL = HOLO_POI_URL.format(holo=testHolo, startDate=threeDaysAgoTime, endDate=currentTime)
 # print(testHoloURL)
 # response = requests.get(testHoloURL)
+statResponseJson = None
+if( not os.path.isfile(JSON_FILENAME)):
+    print("Creating {filename} and getting getStat".format(filename=JSON_FILENAME))
+    res = requests.get(NASFAQ_URL)
+    res = res.json()
+    statResponseJson = res
+    curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+    jsonData = {}
+    jsonData["lastGrab"] = curTime
+    jsonData["stats"] = res
+    with open(JSON_FILENAME, "w", encoding="utf-8") as statJSON:
+        json.dump(jsonData, statJSON)
+else:
+    with open(JSON_FILENAME, "r+", encoding="utf-8") as statJSON:
+        res = json.load(statJSON)
+        curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+        if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
+            print("Updating getStat")
+            res = requests.get(NASFAQ_URL)
+            res = res.json()
+            statResponseJson = res
+            jsonData = {}
+            jsonData["lastGrab"] = curTime
+            jsonData["stats"] = res
+            json.dump(jsonData, statJSON)
+        else:
+            print("Using saved stats")
+            statResponseJson = res["stats"]
 
-statResponse = requests.get(NASFAQ_URL)
-coinHistory = json.loads(statResponse.json()['coinHistory'])
+
+
+
+
+coinHistory = json.loads(statResponseJson['coinHistory'])
 
 currentDate = datetime.now()
 dateFormat = "{month}/{day}/{year}"
 
 currentDateStamp = dateFormat.format(month = currentDate.strftime("%m"), day = currentDate.strftime("%d"), year = currentDate.strftime("%Y"))
 
-holoList = statResponse.json()['stats']
+holoList = statResponseJson['stats']
 poiStatCount ={}
 
 yesterdayAdjustmentTime = coinHistory[-1]['timestamp']
-# for tick in reversed(range(len(statResponse.json()['coinInfo']['data']['aki']['history']))):
+# for tick in reversed(range(len(statResponseJson['coinInfo']['data']['aki']['history']))):
 #     pass
-#     curTimestamp = statResponse.json()['coinInfo']['data']['aki']['history'][tick]['timestamp']
+#     curTimestamp = statResponseJson['coinInfo']['data']['aki']['history'][tick]['timestamp']
 #     curDate = datetime.fromtimestamp(curTimestamp / 1e3).replace(tzinfo=TIMEZONE)
 #     curHour = curDate.hour
 #     curMinute = curDate.minute
@@ -72,9 +106,9 @@ yesterdayAdjustmentTime = coinHistory[-1]['timestamp']
 
 yesterdayAdjustmentHistory = {}
 
-# for holo in statResponse.json()['coinInfo']['data']:
+# for holo in statResponseJson['coinInfo']['data']:
 #     pass
-#     history = statResponse.json()['coinInfo']['data'][holo]['history']
+#     history = statResponseJson['coinInfo']['data'][holo]['history']
 #     for tick in reversed(range(len(history))):
 #         if(history[tick]['timestamp'] == yesterdayAdjustmentTime):
 #             pass
@@ -86,11 +120,11 @@ for tick in reversed(range(len(coinHistory))):
         pass
         yesterdayAdjustmentHistory = history[tick]['data']
 todayCoinHistory = {}
-for holo in statResponse.json()['coinInfo']['data']:
+for holo in statResponseJson['coinInfo']['data']:
     pass
-    todayCoinHistory[holo] = statResponse.json()['coinInfo']['data'][holo]
+    todayCoinHistory[holo] = statResponseJson['coinInfo']['data'][holo]
 
-# todayCoinHistory = statResponse.json()['todayPrices'][-1]["coinInfo"]['data']
+# todayCoinHistory = statResponseJson['todayPrices'][-1]["coinInfo"]['data']
 
 
 
