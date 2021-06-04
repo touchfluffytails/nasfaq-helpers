@@ -64,24 +64,26 @@ if( not os.path.isfile(JSON_FILENAME)):
     with open(JSON_FILENAME, "w", encoding="utf-8") as statJSON:
         json.dump(jsonData, statJSON)
 else:
+    res = None
     with open(JSON_FILENAME, "r+", encoding="utf-8") as statJSON:
         res = json.load(statJSON)
-        curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
-        if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
-            print("Updating getStat")
-            res = requests.get(NASFAQ_URL)
-            res = res.json()
-            statResponseJson = res
-            jsonData = {}
-            jsonData["lastGrab"] = curTime
-            jsonData["stats"] = res
+    curTime = mktime(datetime.now().astimezone(TIMEZONE).timetuple())
+    if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
+        print("Updating getStat")
+        res = requests.get(NASFAQ_URL)
+        res = res.json()
+        statResponseJson = res
+        jsonData = {}
+        jsonData["lastGrab"] = curTime
+        jsonData["stats"] = res
+        with open(JSON_FILENAME, "w", encoding="utf-8") as statJSON:
             json.dump(jsonData, statJSON)
-        else:
-            print("Using saved stats")
-            statResponseJson = res["stats"]
+    else:
+        print("Using saved stats")
+        statResponseJson = res["stats"]
 
 
-
+# print(statResponseJson['coinHistory'])
 
 
 coinHistory = json.loads(statResponseJson['coinHistory'])
@@ -120,9 +122,10 @@ for tick in reversed(range(len(coinHistory))):
         pass
         yesterdayAdjustmentHistory = history[tick]['data']
 todayCoinHistory = {}
-for holo in statResponseJson['coinInfo']['data']:
+for holo in coinHistory[-1]['data']:
     pass
-    todayCoinHistory[holo] = statResponseJson['coinInfo']['data'][holo]
+    holoCoin = coinHistory[-1]['data'][holo]
+    todayCoinHistory[holo] = holoCoin
 
 # todayCoinHistory = statResponseJson['todayPrices'][-1]["coinInfo"]['data']
 

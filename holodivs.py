@@ -9,7 +9,7 @@ import csv
 from zoneinfo import ZoneInfo
 
 # our printing limits for the end of file
-GOOD_HOLO = 0.30
+GOOD_HOLO = 0.27
 ACCEPTABLE_HOLO = 0.25
 
 # from colorama import init
@@ -46,21 +46,23 @@ if( not os.path.isfile(JSON_FILENAME)):
     with open(JSON_FILENAME, "w", encoding="utf-8") as statJSON:
         json.dump(jsonData, statJSON)
 else:
+    res = None
     with open(JSON_FILENAME, "r+", encoding="utf-8") as statJSON:
         res = json.load(statJSON)
-        curTime = mktime(datetime.datetime.now().astimezone(TIMEZONE).timetuple())
-        if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
-            print("Updating getStat")
-            res = requests.get(NASFAQ_URL)
-            res = res.json()
-            statResponseJson = res
-            jsonData = {}
-            jsonData["lastGrab"] = curTime
-            jsonData["stats"] = res
+    curTime = mktime(datetime.datetime.now().astimezone(TIMEZONE).timetuple())
+    if (curTime - res["lastGrab"]) > REDOWNLOAD_STAT_TIME:
+        print("Updating getStat")
+        res = requests.get(NASFAQ_URL)
+        res = res.json()
+        statResponseJson = res
+        jsonData = {}
+        jsonData["lastGrab"] = curTime
+        jsonData["stats"] = res
+        with open(JSON_FILENAME, "w", encoding="utf-8") as statJSON:
             json.dump(jsonData, statJSON)
-        else:
-            print("Using saved stats")
-            statResponseJson = res["stats"]
+    else:
+        print("Using saved stats")
+        statResponseJson = res["stats"]
 
 
 divResponse = requests.get(HOLO_DIVS_URL)
@@ -101,13 +103,14 @@ for divTime in divs:
         lastWeekDivTime = divTime
 lastWeekDivs = divs[lastWeekDivTime]
 
+coinHistory = json.loads(statResponseJson['coinHistory'])
 
 # current prices
 # todayPrices = statResponseJson['todayPrices'][-1]['coinInfo']['data']
 todayPrices = {}
-for holo in statResponseJson['coinInfo']['data']:
+for holo in coinHistory[-1]['data']:
     pass
-    todayPrices[holo] = statResponseJson['coinInfo']['data'][holo]
+    todayPrices[holo] = coinHistory[-1]['data'][holo]
 
 
 goodHolos = {}
